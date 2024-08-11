@@ -13,7 +13,7 @@ const prismaClient = new PrismaClient();
 // signing a message
 router.post("/signin", async(req, res) => {
     // TODO: Add sign verification logic here
-    const hardcodedWalletAddress = "Testing wallet address here";
+    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E68";
 
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
