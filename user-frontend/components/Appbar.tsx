@@ -28,7 +28,9 @@ export const Appbar = () => {
     }
 
     useEffect(() => {
-        signAndSend()
+        if (publicKey) {
+            signAndSend();
+        }
     }, [publicKey]);
 
     return <div className="flex justify-between border-b pb-2 pt-2">
