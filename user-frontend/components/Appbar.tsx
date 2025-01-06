@@ -1,14 +1,16 @@
 "use client";
 import {
     WalletDisconnectButton,
+    WalletModalProvider,
     WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useEffect } from 'react';
+import { useEffect, FC } from 'react';
 import axios from 'axios';
 import { BACKEND_URL } from '@/utils';
+require("@solana/wallet-adapter-react-ui/styles.css");
 
-export const Appbar = () => {
+export const Appbar : FC = () => {
     const { publicKey , signMessage } = useWallet();
 
     async function signAndSend() {
@@ -33,7 +35,7 @@ export const Appbar = () => {
         }
     }, [publicKey]);
 
-    return <div className="flex justify-between border-b pb-2 pt-2">
+    return <div className="flex justify-between border-b pb-2 pt-2 bg-gray-800 text-white">
         <div className="text-2xl pl-4 flex justify-center pt-3">
             Turkify
         </div>
