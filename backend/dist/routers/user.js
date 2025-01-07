@@ -134,8 +134,9 @@ router.get("/presignedUrl", middleware_1.authMiddleware, (req, res) => __awaiter
 // connect with Phantom wallet)
 // signing a message
 router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     // TODO: Add sign verification logic here
-    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E68";
+    const hardcodedWalletAddress = (_a = process.env.WALLET_ADDRESS) !== null && _a !== void 0 ? _a : "";
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = yield prismaClient.user.findFirst({

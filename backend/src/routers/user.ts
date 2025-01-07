@@ -75,7 +75,8 @@ router.get("/task", authMiddleware, async (req, res) => {
      })
 
     res.json({
-        result
+        result,
+        taskDetails
     })
 
 });
@@ -87,6 +88,12 @@ router.post("/task", authMiddleware, async (req, res) => {
     const body = req.body;
 
     const parseData = createTaskInput.safeParse(body);
+
+    const user = await prismaClient.user.findFirst({
+        where: {
+            id: userId
+        }
+    })
 
     if (!parseData.success) {
         return res.status(411).json({
@@ -101,7 +108,7 @@ router.post("/task", authMiddleware, async (req, res) => {
         const response = await tx.task.create({
             data: {
                 title: parseData.data.title ?? DEFAULT_TITLE,
-                amount: 1 * TOTAL_DECIMALS,
+                amount: 0.1 * TOTAL_DECIMALS,
                 //TODO: Signature should be unique in the table else people can reuse a signature
                 signature: parseData.data.signature,
                 user_id: userId
@@ -136,7 +143,7 @@ router.get("/presignedUrl", authMiddleware, async (req, res) => {
           ['content-length-range', 0, 5 * 1024 * 1024] // 5 MB max
         ],
         Fields: {
-          'Content-Type': 'image/png'
+            'Content-Type': 'image/jpg'
         },
         Expires: 3600
     })

@@ -105,8 +105,6 @@ router.post("/submission", workerMiddleware, async (req, res) => {
                 }
             })
 
-            console.log(submission);
-
             await tx.worker.update({
                 where: {
                     id: userId,
