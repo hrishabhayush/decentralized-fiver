@@ -10,10 +10,6 @@ const cors_1 = __importDefault(require("cors"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 app.use((0, cors_1.default)());
-app.use((req, res, next) => {
-    res.setHeader("Content-Type", "application/json");
-    next();
-});
 // postgress + prisma => ORM 
 app.use("/v1/user", user_1.default);
 app.use("/v1/worker", worker_1.default);

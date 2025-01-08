@@ -31,10 +31,11 @@ export function UploadImage({ onImageAdded, image }: {
             formData.set("X-Amz-Algorithm", response.data.fields["X-Amz-Algorithm"]);
             formData.append("file", file);
             const awsResponse = await axios.post(presignedUrl, formData);
-            console.log(response.data.fields["key"]);
+            console.log(awsResponse);
+            // console.log(response.data.fields["key"]);
             onImageAdded(`${CLOUDFRONT_URL}/${response.data.fields["key"]}`);
         } catch(e) {
-            console.log(e)
+            console.log(e);
         }
         setUploading(false);
     }

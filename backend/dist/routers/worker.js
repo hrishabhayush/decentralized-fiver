@@ -100,7 +100,6 @@ router.post("/submission", middleware_1.workerMiddleware, (req, res) => __awaite
                     amount: Number(amount)
                 }
             });
-            console.log(submission);
             yield tx.worker.update({
                 where: {
                     id: userId,

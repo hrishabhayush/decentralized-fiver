@@ -73,7 +73,8 @@ router.get("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0,
         result[r.option_id].count++;
     });
     res.json({
-        result
+        result,
+        taskDetails
     });
 }));
 router.post("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -82,6 +83,11 @@ router.post("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0
     // validate the inputs from the user;
     const body = req.body;
     const parseData = types_1.createTaskInput.safeParse(body);
+    const user = yield prismaClient.user.findFirst({
+        where: {
+            id: userId
+        }
+    });
     if (!parseData.success) {
         return res.status(411).json({
             message: "You've sent the wrong inputs",
@@ -93,7 +99,7 @@ router.post("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0
         const response = yield tx.task.create({
             data: {
                 title: (_a = parseData.data.title) !== null && _a !== void 0 ? _a : DEFAULT_TITLE,
-                amount: 1 * config_1.TOTAL_DECIMALS,
+                amount: 0.1 * config_1.TOTAL_DECIMALS,
                 //TODO: Signature should be unique in the table else people can reuse a signature
                 signature: parseData.data.signature,
                 user_id: userId
@@ -121,7 +127,7 @@ router.get("/presignedUrl", middleware_1.authMiddleware, (req, res) => __awaiter
             ['content-length-range', 0, 5 * 1024 * 1024] // 5 MB max
         ],
         Fields: {
-            'Content-Type': 'image/png'
+            'Content-Type': 'image/jpg'
         },
         Expires: 3600
     });
