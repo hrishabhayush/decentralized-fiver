@@ -153,7 +153,7 @@ router.get("/nextTask", workerMiddleware, async (req, res) => {
 });
 
 router.post("/signin", async (req, res) => {
-    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E65";
+    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E65892j348";
 
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user

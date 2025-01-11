@@ -140,7 +140,7 @@ router.get("/nextTask", middleware_1.workerMiddleware, (req, res) => __awaiter(v
     }
 }));
 router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E65";
+    const hardcodedWalletAddress = "0x0D181A6daA62c7a8180d1B6FdF54C8fd20942E65892j348";
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = yield prismaClient.worker.findFirst({

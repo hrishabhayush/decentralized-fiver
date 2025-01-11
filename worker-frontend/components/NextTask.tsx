@@ -54,7 +54,6 @@ export const NextTask = () => {
  
     return <div>
         <div className='text-2xl pt-20 flex justify-center'>
-            {JSON.stringify(currentTask)}
             {currentTask.title}
         </div>
         <div className='flex justify-center pt-8'>
