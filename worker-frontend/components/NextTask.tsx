@@ -18,6 +18,7 @@ interface Task {
 export const NextTask = () => {
     const [currentTask, setCurrentTask] = useState<Task | null>(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
         setLoading(true);
@@ -54,27 +55,33 @@ export const NextTask = () => {
  
     return <div>
         <div className='text-2xl pt-20 flex justify-center'>
-            {currentTask.title}
+            {currentTask.title} {currentTask.id}
         </div>
         <div className='flex justify-center pt-8'>
             {currentTask.options.map(option => <Option onSelect={async ()=> {
-                const response = await axios.post(`${BACKEND_URL}/v1/worker/submission`, {
-                    taskId: currentTask.id.toString(),
-                    selection: option.id.toString()
-                }, {
-                    headers: {
-                        "Authorization": localStorage.getItem("token")
+                setSubmitting(true);
+                try {
+                    const response = await axios.post(`${BACKEND_URL}/v1/worker/submission`, {
+                        taskId: currentTask.id.toString(),
+                        selection: option.id.toString()
+                    }, {
+                        headers: {
+                            "Authorization": localStorage.getItem("token")
+                        }
+                    } )
+    
+                    // refresh the user balance whenever the payment is done 
+    
+                    const nextTask = response.data.nextTask;
+                    if (nextTask) {
+                        setCurrentTask(nextTask);
+                    } else {
+                        setCurrentTask(null);
                     }
-                } )
-
-                // refresh the user balance whenever the payment is done 
-
-                const nextTask = response.data.nextTask;
-                if (nextTask) {
-                    setCurrentTask(nextTask);
-                } else {
-                    setCurrentTask(null);
+                } catch(e) {
+                    console.log(e);
                 }
+                setSubmitting(false);
             }} key={option.id} imageUrl={option.image_url} />)}
         </div>
     </div>
