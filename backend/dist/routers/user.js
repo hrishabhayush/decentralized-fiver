@@ -21,6 +21,8 @@ const config_1 = require("../config");
 const middleware_1 = require("../middleware");
 const s3_presigned_post_1 = require("@aws-sdk/s3-presigned-post");
 const types_1 = require("../types");
+const tweetnacl_1 = __importDefault(require("tweetnacl"));
+const web3_js_1 = require("@solana/web3.js");
 const DEFAULT_TITLE = "Select the most engaging thumbnail/picture";
 const s3Client = new client_s3_1.S3Client({
     credentials: {
@@ -146,14 +148,15 @@ router.get("/presignedUrl", middleware_1.authMiddleware, (req, res) => __awaiter
 // connect with Phantom wallet)
 // signing a message
 router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    // TODO: Add sign verification logic here
-    const hardcodedWalletAddress = (_a = process.env.WALLET_ADDRESS) !== null && _a !== void 0 ? _a : "";
+    // sign verification logic here
+    const { publicKey, signature } = req.body;
+    const message = new TextEncoder().encode("Sign in to decentralized fiver website");
+    const result = tweetnacl_1.default.sign.detached.verify(message, new Uint8Array(signature.data), new web3_js_1.PublicKey(publicKey).toBytes());
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = yield prismaClient.user.findFirst({
         where: {
-            address: hardcodedWalletAddress
+            address: publicKey
         }
     });
     if (existingUser) {
@@ -167,7 +170,7 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
     else {
         const user = yield prismaClient.user.create({
             data: {
-                address: hardcodedWalletAddress,
+                address: publicKey,
             }
         });
         const token = jsonwebtoken_1.default.sign({

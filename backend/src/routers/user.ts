@@ -6,6 +6,8 @@ import { JWT_SECRET, TOTAL_DECIMALS } from "../config";
 import { authMiddleware } from "../middleware";
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 import { createTaskInput } from "../types";
+import nacl from "tweetnacl";
+import { PublicKey } from "@solana/web3.js";
 
 const DEFAULT_TITLE = "Select the most engaging thumbnail/picture";
 
@@ -168,14 +170,21 @@ router.get("/presignedUrl", authMiddleware, async (req, res) => {
 // connect with Phantom wallet)
 // signing a message
 router.post("/signin", async(req, res) => {
-    // TODO: Add sign verification logic here
-    const hardcodedWalletAddress = process.env.WALLET_ADDRESS ?? "";
+    // sign verification logic here
+    const { publicKey, signature } = req.body;
+    const message = new TextEncoder().encode("Sign in to decentralized fiver website");
 
+    const result = nacl.sign.detached.verify(
+        message,
+        new Uint8Array(signature.data),
+        new PublicKey(publicKey).toBytes(),
+      );
+        
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = await prismaClient.user.findFirst({
         where: {
-            address: hardcodedWalletAddress
+            address: publicKey
         }
     })
 
@@ -191,7 +200,7 @@ router.post("/signin", async(req, res) => {
 
         const user = await prismaClient.user.create({
             data: {
-                address: hardcodedWalletAddress,
+                address: publicKey,
             }
         })
 

@@ -5,7 +5,6 @@ import { BACKEND_URL } from "@/utils";
 import axios from "axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 
 export const Upload = () => {
     const [images, setImages] = useState<string[]>([]);
