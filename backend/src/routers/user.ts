@@ -7,8 +7,12 @@ import { authMiddleware } from "../middleware";
 import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 import { createTaskInput } from "../types";
 import nacl from "tweetnacl";
-import { PublicKey } from "@solana/web3.js";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { useConnection } from "@solana/wallet-adapter-react";
 
+const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/3GHuEu4-cXEuE8jDAZW3EFgTedkyJ0K3');
+
+const PARENT_WALLET_ADDRESS = "7W5nwpKWd4MfocNsXHNdUmhngziVRjL4fuyBHrJG4kZC"
 const DEFAULT_TITLE = "Select the most engaging thumbnail/picture";
 
 const s3Client = new S3Client({
@@ -34,62 +38,80 @@ prismaClient.$transaction(
 )
 
 router.get("/task", authMiddleware, async (req, res) => {
-    // @ts-ignore
-    const taskId: string = req.query.taskId;
-    // @ts-ignore
-    const userId: string = req.userId;
+    //@ts-ignore
+    const userId = req.userId
+    // validate the inputs from the user;
+    const body = req.body;
 
-    // Fetch task details to verify access
-    const taskDetails = await prismaClient.task.findFirst({
+    const parseData = createTaskInput.safeParse(body);
+
+    const user = await prismaClient.user.findFirst({
         where: {
-            user_id: Number(userId),
-            id: Number(taskId)
-        },
-        include: {
-            options: true
+            id: userId
         }
     })
-    
-    if (!taskDetails) {
+
+    if (!parseData.success) {
         return res.status(411).json({
-            message: "You don't have access to the this task."
+            message: "You've sent the wrong inputs"
         })
     }
 
-    // TODO: Make this faster - Use aggregation to count submissions by option
-    const responses = await prismaClient.submission.findMany({
-        where: {
-            task_id: Number(taskId)
-        }, 
-        include: {
-            option: true
-        }
+    const transaction = await connection.getTransaction(parseData.data.signature, {
+        maxSupportedTransactionVersion: 1
     });
 
-    const result: Record<string, {
-        count: number;
-        option: {
-            imageUrl: string
-        }
-    }> = {};
+    console.log(transaction);
 
-    taskDetails.options.forEach(option => {
-        result[option.id] = {
-            count: 0, 
-            option: {
-                imageUrl: option.image_url
+    if ((transaction?.meta?.postBalances[1] ?? 0) - (transaction?.meta?.preBalances[1] ?? 0) !== 100000) {
+        return res.status(411).json({
+            message: "Transaction signature/amount incorrect"
+        })
+    }
+
+    if (transaction?.transaction.message.getAccountKeys().get(1)?.toString() !== PARENT_WALLET_ADDRESS) {
+        return res.status(411).json({
+            message: "Transaction sent to wrong address"
+        })
+    }
+
+    if (transaction?.transaction.message.getAccountKeys().get(0)?.toString() !== user?.address) {
+        return res.status(411).json({
+            message: "Transaction sent to wrong address"
+        })
+    }
+    // was this money paid by this user address or a different address?
+
+    // parse the signature here to ensure the person has paid 0.1 SOL
+    // const transaction = Transaction.from(parseData.data.signature);
+
+    let response = await prismaClient.$transaction(async tx => {
+
+        const response = await tx.task.create({
+            data: {
+                title: parseData.data.title ?? DEFAULT_TITLE,
+                amount: 1 * TOTAL_DECIMALS,
+                //TODO: Signature should be unique in the table else people can reuse a signature
+                signature: parseData.data.signature,
+                user_id: userId
             }
-        }
-    })
+        });
 
-    responses.forEach(r => {
-        result[r.option_id].count++;
-     })
+        await tx.option.createMany({
+            data: parseData.data.options.map(x => ({
+                image_url: x.imageUrl,
+                task_id: response.id
+            }))
+        })
+
+        return response;
+
+    })
 
     res.json({
-        result,
-        taskDetails
+        id: response.id
     })
+
 
 });
 

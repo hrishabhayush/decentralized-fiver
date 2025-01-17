@@ -23,6 +23,8 @@ const s3_presigned_post_1 = require("@aws-sdk/s3-presigned-post");
 const types_1 = require("../types");
 const tweetnacl_1 = __importDefault(require("tweetnacl"));
 const web3_js_1 = require("@solana/web3.js");
+const connection = new web3_js_1.Connection('https://solana-mainnet.g.alchemy.com/v2/3GHuEu4-cXEuE8jDAZW3EFgTedkyJ0K3');
+const PARENT_WALLET_ADDRESS = "7W5nwpKWd4MfocNsXHNdUmhngziVRjL4fuyBHrJG4kZC";
 const DEFAULT_TITLE = "Select the most engaging thumbnail/picture";
 const s3Client = new client_s3_1.S3Client({
     credentials: {
@@ -40,49 +42,65 @@ prismaClient.$transaction((prisma) => __awaiter(void 0, void 0, void 0, function
     timeout: 10000, // default: 5000
 });
 router.get("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    // @ts-ignore
-    const taskId = req.query.taskId;
-    // @ts-ignore
+    var _a, _b, _c, _d, _e, _f;
+    //@ts-ignore
     const userId = req.userId;
-    // Fetch task details to verify access
-    const taskDetails = yield prismaClient.task.findFirst({
+    // validate the inputs from the user;
+    const body = req.body;
+    const parseData = types_1.createTaskInput.safeParse(body);
+    const user = yield prismaClient.user.findFirst({
         where: {
-            user_id: Number(userId),
-            id: Number(taskId)
-        },
-        include: {
-            options: true
+            id: userId
         }
     });
-    if (!taskDetails) {
+    if (!parseData.success) {
         return res.status(411).json({
-            message: "You don't have access to the this task."
+            message: "You've sent the wrong inputs"
         });
     }
-    // TODO: Make this faster - Use aggregation to count submissions by option
-    const responses = yield prismaClient.submission.findMany({
-        where: {
-            task_id: Number(taskId)
-        },
-        include: {
-            option: true
-        }
+    const transaction = yield connection.getTransaction(parseData.data.signature, {
+        maxSupportedTransactionVersion: 1
     });
-    const result = {};
-    taskDetails.options.forEach(option => {
-        result[option.id] = {
-            count: 0,
-            option: {
-                imageUrl: option.image_url
+    console.log(transaction);
+    if (((_b = (_a = transaction === null || transaction === void 0 ? void 0 : transaction.meta) === null || _a === void 0 ? void 0 : _a.postBalances[1]) !== null && _b !== void 0 ? _b : 0) - ((_d = (_c = transaction === null || transaction === void 0 ? void 0 : transaction.meta) === null || _c === void 0 ? void 0 : _c.preBalances[1]) !== null && _d !== void 0 ? _d : 0) !== 100000) {
+        return res.status(411).json({
+            message: "Transaction signature/amount incorrect"
+        });
+    }
+    if (((_e = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(1)) === null || _e === void 0 ? void 0 : _e.toString()) !== PARENT_WALLET_ADDRESS) {
+        return res.status(411).json({
+            message: "Transaction sent to wrong address"
+        });
+    }
+    if (((_f = transaction === null || transaction === void 0 ? void 0 : transaction.transaction.message.getAccountKeys().get(0)) === null || _f === void 0 ? void 0 : _f.toString()) !== (user === null || user === void 0 ? void 0 : user.address)) {
+        return res.status(411).json({
+            message: "Transaction sent to wrong address"
+        });
+    }
+    // was this money paid by this user address or a different address?
+    // parse the signature here to ensure the person has paid 0.1 SOL
+    // const transaction = Transaction.from(parseData.data.signature);
+    let response = yield prismaClient.$transaction((tx) => __awaiter(void 0, void 0, void 0, function* () {
+        var _a;
+        const response = yield tx.task.create({
+            data: {
+                title: (_a = parseData.data.title) !== null && _a !== void 0 ? _a : DEFAULT_TITLE,
+                amount: 1 * config_1.TOTAL_DECIMALS,
+                //TODO: Signature should be unique in the table else people can reuse a signature
+                signature: parseData.data.signature,
+                user_id: userId
             }
-        };
-    });
-    responses.forEach(r => {
-        result[r.option_id].count++;
-    });
+        });
+        yield tx.option.createMany({
+            data: parseData.data.options.map(x => ({
+                image_url: x.imageUrl,
+                task_id: response.id
+            }))
+        });
+        return response;
+    }));
     res.json({
-        result,
-        taskDetails
+        id: response.id
     });
 }));
 router.post("/task", middleware_1.authMiddleware, (req, res) => __awaiter(void 0, void 0, void 0, function* () {
