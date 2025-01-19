@@ -8,7 +8,6 @@ import { createPresignedPost } from '@aws-sdk/s3-presigned-post'
 import { createTaskInput } from "../types";
 import nacl from "tweetnacl";
 import { Connection, PublicKey } from "@solana/web3.js";
-import { useConnection } from "@solana/wallet-adapter-react";
 
 const connection = new Connection('https://solana-mainnet.g.alchemy.com/v2/3GHuEu4-cXEuE8jDAZW3EFgTedkyJ0K3');
 
