@@ -200,7 +200,10 @@ router.post("/signin", async(req, res) => {
         new Uint8Array(signature.data),
         new PublicKey(publicKey).toBytes(),
       );
-        
+
+
+    console.log(result);
+    
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = await prismaClient.user.findFirst({

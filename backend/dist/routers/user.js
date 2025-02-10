@@ -170,6 +170,7 @@ router.post("/signin", (req, res) => __awaiter(void 0, void 0, void 0, function*
     const { publicKey, signature } = req.body;
     const message = new TextEncoder().encode("Sign in to decentralized fiver website");
     const result = tweetnacl_1.default.sign.detached.verify(message, new Uint8Array(signature.data), new web3_js_1.PublicKey(publicKey).toBytes());
+    console.log(result);
     // If the user with this wallet address already exists, then it will just return userId
     // Otherwise creates the userId for that user
     const existingUser = yield prismaClient.user.findFirst({
