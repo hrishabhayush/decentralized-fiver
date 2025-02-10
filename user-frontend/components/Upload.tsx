@@ -32,9 +32,16 @@ export const Upload = () => {
     }
 
     async function makePayment() {
+        if (!publicKey) {
+            alert("Please connect your wallet");
+            return;
+        }
+
+
+        // Using Devnet recepient address and small test amount
         const transaction = new Transaction().add(
             SystemProgram.transfer({
-                fromPubkey: publicKey!,
+                fromPubkey: publicKey,
                 toPubkey: new PublicKey("7W5nwpKWd4MfocNsXHNdUmhngziVRjL4fuyBHrJG4kZC"),
                 lamports: 100000
             })
@@ -77,8 +84,11 @@ export const Upload = () => {
         </div>
 
         <div className="flex justify-center">
-            <button onClick={txSignature ? onSubmit: makePayment} type="button" className="mt-4 text-white bg-gray=800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:however:bg-gray-700 dark:focus:ring-gray-700 dark:boder-gray-700">
-                {txSignature ? "Submit Task" : "Pay 0.0001 SOL"}
+            <button onClick={async () => {
+                await makePayment();
+                await onSubmit()
+            }} type="button" className="mt-4 text-white bg-gray=800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-full text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:however:bg-gray-700 dark:focus:ring-gray-700 dark:boder-gray-700">
+                Submit Task
             </button>
         </div>
     </div>
