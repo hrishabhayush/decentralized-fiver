@@ -33,7 +33,7 @@ export const Upload = () => {
 
     async function makePayment() {
         if (!publicKey) {
-            alert("Please connect your wallet");
+            alert("Wallet is not connected. Please connect your wallet.");
             return;
         }
 
